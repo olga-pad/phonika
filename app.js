@@ -6,8 +6,8 @@ const words2=[{word:'mat',picture:'🧘'},{word:'map',picture:'🗺️'},{word:'
 const vowels='aeiou',SIZE=5,GOAL=3;
 let level=Number(localStorage.getItem('phonika-level')||1),section=localStorage.getItem('phonika-section')||'learn',i=0,sessionCount=0,mode=localStorage.getItem('phonika-letter-mode')||'lower',marked=false;
 let progress=JSON.parse(localStorage.getItem('phonika-letter-progress')||'{}');if(level!==1&&level!==2)level=1;
-const $=id=>document.getElementById(id),upper=()=>mode==='upper'||mode==='cursiveUpper',cursive=()=>mode.startsWith('cursive');
-function textCase(s){return upper()?s.toUpperCase():s.toLowerCase();}
+const $=id=>document.getElementById(id),cursive=()=>mode.startsWith('cursive');
+function textCase(s){const lower=s.toLowerCase();if(mode==='upper'||mode==='cursiveUpper')return lower.toUpperCase();if(mode==='title'||mode==='cursiveTitle')return lower.charAt(0).toUpperCase()+lower.slice(1);return lower;}
 function coloredText(el,text){el.replaceChildren(...[...textCase(text)].map(ch=>{const span=document.createElement('span');span.textContent=ch;span.className=vowels.includes(ch.toLowerCase())?'vowel':'consonant';return span;}));}
 function score(ch){return Number(progress[ch]||0)}function mastered(ch){return score(ch)>=GOAL}
 function introduced(){let n=2;if(mastered('m'))n=3;if(mastered('d')&&mastered('g'))n=4;return l2.slice(0,n);}
