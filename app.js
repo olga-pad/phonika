@@ -1,15 +1,7 @@
 'use strict';
-const sounds=[
- {letter:'s',word:'sun',picture:'☀️'},
- {letter:'a',word:'apple',picture:'🍎'},
- {letter:'t',word:'tap',picture:'👆'},
- {letter:'p',word:'pig',picture:'🐷'},
- {letter:'i',word:'insect',picture:'🐞'},
- {letter:'n',word:'nest',picture:'🪺'}
-];
-let i=0;
+const sounds=[{letter:'s',word:'sun',picture:'☀️'},{letter:'a',word:'apple',picture:'🍎'},{letter:'t',word:'tap',picture:'👆'},{letter:'p',word:'pig',picture:'🐷'},{letter:'i',word:'insect',picture:'🐞'},{letter:'n',word:'nest',picture:'🪺'}];
+let i=0,mode=localStorage.getItem('phonika-letter-mode')||'lower';
 const $=id=>document.getElementById(id);
-function render(){const x=sounds[i];$('letter').textContent=x.letter;$('picture').textContent=x.picture;$('word').textContent=x.word;$('dots').replaceChildren(...sounds.map((_,j)=>{const d=document.createElement('span');d.className='dot'+(j===i?' on':'');return d;}));}
-function playWord(){if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(sounds[i].word);u.lang='en-GB';u.rate=.72;u.pitch=1;speechSynthesis.speak(u);}
-$('letter').onclick=playWord;$('picture').onclick=playWord;$('word').onclick=playWord;$('next').onclick=()=>{speechSynthesis?.cancel();i=(i+1)%sounds.length;render();};
-render();
+function render(){const x=sounds[i],upper=mode==='upper'||mode==='cursiveUpper',cursive=mode.startsWith('cursive');$('letter').textContent=upper?x.letter.toUpperCase():x.letter.toLowerCase();$('letter').classList.toggle('cursive',cursive);$('picture').textContent=x.picture;$('word').textContent=x.word;$('mode').value=mode;$('dots').replaceChildren(...sounds.map((_,j)=>{const d=document.createElement('span');d.className='dot'+(j===i?' on':'');return d;}));}
+function playWord(){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(sounds[i].word);u.lang='en-GB';u.rate=.72;u.pitch=1;speechSynthesis.speak(u);}
+$('mode').onchange=e=>{mode=e.target.value;localStorage.setItem('phonika-letter-mode',mode);render();};$('letter').onclick=playWord;$('picture').onclick=playWord;$('word').onclick=playWord;$('next').onclick=()=>{speechSynthesis?.cancel();i=(i+1)%sounds.length;render();};render();
