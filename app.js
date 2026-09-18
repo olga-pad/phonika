@@ -1,5 +1,5 @@
 'use strict';
-document.write('<script src="./app-core.js?v=24"><\/script>');
+document.write('<script src="./app-core.js?v=25"><\/script>');
 window.addEventListener('DOMContentLoaded',()=>{
  if(localStorage.getItem('phonika-letter-mode')!=='upper'){mode='upper';save();render();}
  const sound=document.getElementById('soundCard');
@@ -8,7 +8,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  const mastery=document.getElementById('mastery');
 
  const useAudio=()=>{usedHint=true;mastery.disabled=true;speak();};
- sound.onclick=useAudio;
- word.onclick=useAudio;
- picture.onclick=useAudio;
+ sound.onclick=null;
+ word.onclick=null;
+ picture.onclick=null;
 });
