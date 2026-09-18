@@ -1,7 +1,7 @@
 'use strict';
 document.write('<script src="./app-core.js?v=24"><\/script>');
 window.addEventListener('DOMContentLoaded',()=>{
- if(!localStorage.getItem('phonika-letter-mode')){mode='upper';save();render();}
+ if(localStorage.getItem('phonika-letter-mode')!=='upper'){mode='upper';save();render();}
  const sound=document.getElementById('soundCard');
  const word=document.getElementById('wordCard');
  const picture=document.getElementById('picture');
