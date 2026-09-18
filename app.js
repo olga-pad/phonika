@@ -13,7 +13,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  picture.onclick=null;
  const prevCard=document.getElementById('prevCard');
  const nextCard=document.getElementById('nextCard');
- const refreshNav=()=>{const count=section==='words'?sessionQueue.length:soundQueue.length;prevCard.hidden=count<2;nextCard.hidden=count<2;};
+ const refreshNav=()=>{const count=section==='words'?sessionQueue.length:soundQueue.length;const pos=section==='words'?sessionIndex:index;prevCard.hidden=count<2||pos<=0;nextCard.hidden=count<2;};
  nextCard.onclick=()=>{next();refreshNav();};
  prevCard.onclick=()=>{if(section==='words'){if(sessionQueue.length){sessionIndex=(sessionIndex-1+sessionQueue.length)%sessionQueue.length;render();}}else{index=(index-1+Math.max(1,soundQueue.length))%Math.max(1,soundQueue.length);render();}refreshNav();};
  document.getElementById('wordsTab').addEventListener('click',()=>requestAnimationFrame(refreshNav));
