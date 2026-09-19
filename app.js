@@ -17,7 +17,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  const prevCard=document.getElementById('prevCard');
  const nextCard=document.getElementById('nextCard');
  const refreshNav=()=>{const count=section==='words'?sessionQueue.length:(soundSessionQueue.length?soundSessionQueue.length:soundQueue.length);const pos=section==='words'?sessionIndex:(soundSessionQueue.length?soundSessionIndex:index);prevCard.hidden=count<2||pos<=0;nextCard.hidden=count<1;};
- nextCard.onclick=()=>{next();refreshNav();};
+ nextCard.onclick=()=>{if(section==='sounds'){if(!soundSessionQueue.length)startSoundSession();const key=currentKey();if(key&&marked)soundSessionReads.set(key,Math.min(SESSION_GOAL,(soundSessionReads.get(key)||0)+1));const pending=soundSessionQueue.filter(s=>(soundSessionReads.get(s)||0)<SESSION_GOAL);if(!pending.length){soundSessionQueue=[];soundSessionIndex=0;document.getElementById('practice').hidden=true;document.getElementById('finish').hidden=false;refreshNav();return;}const currentPos=pending.indexOf(key);soundSessionQueue=pending;soundSessionIndex=currentPos>=0?(currentPos+1)%pending.length:Math.min(soundSessionIndex,pending.length-1);index=soundSessionIndex;render();refreshNav();return;}next();refreshNav();};
  prevCard.onclick=()=>{if(section==='words'){if(sessionQueue.length&&sessionIndex>0){sessionIndex--;render();}}else if(soundSessionQueue.length&&soundSessionIndex>0){soundSessionIndex--;index=soundSessionIndex;render();}refreshNav();};
  document.getElementById('wordsTab').addEventListener('click',()=>requestAnimationFrame(refreshNav));
  document.getElementById('soundsTab').addEventListener('click',()=>requestAnimationFrame(refreshNav));
