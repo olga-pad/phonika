@@ -1,5 +1,5 @@
 'use strict';
-document.write('<script src="./app-core.js?v=30"><\/script>');
+document.write('<script src="./app-core.js?v=31"><\/script>');
 window.addEventListener('DOMContentLoaded',()=>{
  if(localStorage.getItem('phonika-letter-mode')!=='upper'){mode='upper';save();render();}
  const sound=document.getElementById('soundCard');
