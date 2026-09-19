@@ -11,7 +11,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  const useAudio=()=>{usedHint=true;mastery.disabled=true;speakAssociationWord();};
  const helpButton=document.getElementById('help');if(helpButton)helpButton.onclick=useAudio;
  const pictureButton=document.getElementById('showPicture');if(pictureButton)pictureButton.onclick=()=>{usedHint=true;mastery.disabled=true;picture.hidden=!picture.hidden;pictureButton.querySelector('span').textContent=picture.hidden?'Show picture':'Hide picture';};
- sound.onclick=null;
+ sound.onclick=()=>{if(section==='sounds')speakAssociationWord();};
  word.onclick=null;
  picture.onclick=null;
  const prevCard=document.getElementById('prevCard');
