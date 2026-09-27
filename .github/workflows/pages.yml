@@ -1,9 +1,9 @@
-name: Deploy Phonika Games preview to GitHub Pages
+name: Deploy Phonika to GitHub Pages
 
 on:
   push:
     branches:
-      - feat/games
+      - main
   workflow_dispatch:
 
 permissions:
@@ -22,22 +22,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Check out main site
+      - name: Check out production site
         uses: actions/checkout@v4
-        with:
-          ref: main
-          path: site
-
-      - name: Check out Games preview
-        uses: actions/checkout@v4
-        with:
-          ref: feat/games
-          path: preview-source
-
-      - name: Add branch preview under /preview/games
-        run: |
-          mkdir -p site/preview/games
-          rsync -a --exclude '.git' --exclude '.github' preview-source/ site/preview/games/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -47,7 +33,7 @@ jobs:
       - name: Upload static site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deployment
