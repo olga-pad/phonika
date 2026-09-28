@@ -2,18 +2,23 @@ package com.phonika.domain;
 
 import com.phonika.course.domain.Course;
 import com.phonika.learner.domain.Learner;
+import com.phonika.learning.application.ContentAvailability;
 import com.phonika.learning.domain.Grapheme;
 import com.phonika.learning.domain.Language;
 import com.phonika.learning.domain.Phoneme;
+import com.phonika.learning.domain.Skill;
 import com.phonika.learning.domain.Word;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class PhonikaDomainTest {
+    private final ContentAvailability availability = new ContentAvailability();
+
     @Test void supportsThreeLearningLanguages() {
         assertArrayEquals(new Language[]{Language.RU, Language.EN, Language.FR}, Language.values());
     }
@@ -90,7 +95,86 @@ class PhonikaDomainTest {
         assertEquals(3, course.content().size());
     }
 
+    @Test void russianWordIsAvailableWhenAllExplicitPrerequisiteSkillsAreMastered() {
+        RussianKot fixture = russianKot();
+        assertTrue(availability.isAvailable(fixture.course(), fixture.word(),
+                Set.of(fixture.kSkill().id(), fixture.oSkill().id(), fixture.tSkill().id())));
+    }
+
+    @Test void russianWordIsLockedWhenOneExplicitPrerequisiteSkillIsMissing() {
+        RussianKot fixture = russianKot();
+        assertFalse(availability.isAvailable(fixture.course(), fixture.word(),
+                Set.of(fixture.kSkill().id(), fixture.oSkill().id())));
+    }
+
+    @Test void availabilityDoesNotInspectWordCharactersOrSegmentation() {
+        UUID courseId = UUID.randomUUID();
+        Phoneme prerequisite = new Phoneme(UUID.randomUUID(), "z", Language.RU);
+        Word word = new Word(UUID.randomUUID(), "кот", Language.RU);
+        Skill prerequisiteSkill = new Skill(UUID.randomUUID(), courseId, prerequisite);
+        Skill wordSkill = new Skill(UUID.randomUUID(), courseId, word, Set.of(prerequisiteSkill.id()));
+        Course course = new Course(courseId, "READING_RU", Language.RU,
+                List.of(prerequisite, word), List.of(prerequisiteSkill, wordSkill));
+
+        assertTrue(word.graphemes().isEmpty());
+        assertTrue(availability.isAvailable(course, word, Set.of(prerequisiteSkill.id())));
+    }
+
+    @Test void courseRejectsSkillTargetFromAnotherLanguage() {
+        UUID courseId = UUID.randomUUID();
+        Word english = new Word(UUID.randomUUID(), "cat", Language.EN);
+        Skill skill = new Skill(UUID.randomUUID(), courseId, english);
+        assertThrows(IllegalArgumentException.class,
+                () -> new Course(courseId, "READING_RU", Language.RU, List.of(english), List.of(skill)));
+    }
+
+    @Test void courseRejectsPrerequisiteSkillOutsideItsOwnSkillSet() {
+        UUID ruCourseId = UUID.randomUUID();
+        UUID enCourseId = UUID.randomUUID();
+        Phoneme ruK = new Phoneme(UUID.randomUUID(), "к", Language.RU);
+        Word kot = new Word(UUID.randomUUID(), "кот", Language.RU);
+        Grapheme sh = new Grapheme(UUID.randomUUID(), "sh", Language.EN);
+        Skill englishSh = new Skill(UUID.randomUUID(), enCourseId, sh);
+        Skill ruKSkill = new Skill(UUID.randomUUID(), ruCourseId, ruK);
+        Skill kotSkill = new Skill(UUID.randomUUID(), ruCourseId, kot, Set.of(englishSh.id()));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> new Course(ruCourseId, "READING_RU", Language.RU,
+                        List.of(ruK, kot), List.of(ruKSkill, kotSkill)));
+    }
+
+    @Test void availabilitySupportsMultiCharacterGraphemeSkill() {
+        UUID courseId = UUID.randomUUID();
+        Grapheme sh = new Grapheme(UUID.randomUUID(), "sh", Language.EN);
+        Word ship = new Word(UUID.randomUUID(), "ship", Language.EN);
+        Skill shSkill = new Skill(UUID.randomUUID(), courseId, sh);
+        Skill shipSkill = new Skill(UUID.randomUUID(), courseId, ship, Set.of(shSkill.id()));
+        Course course = new Course(courseId, "READING_EN", Language.EN,
+                List.of(sh, ship), List.of(shSkill, shipSkill));
+
+        assertEquals("sh", sh.representation());
+        assertTrue(availability.isAvailable(course, ship, Set.of(shSkill.id())));
+    }
+
+    private RussianKot russianKot() {
+        UUID courseId = UUID.randomUUID();
+        Phoneme k = new Phoneme(UUID.randomUUID(), "к", Language.RU);
+        Phoneme o = new Phoneme(UUID.randomUUID(), "о", Language.RU);
+        Phoneme t = new Phoneme(UUID.randomUUID(), "т", Language.RU);
+        Word kot = new Word(UUID.randomUUID(), "кот", Language.RU);
+        Skill kSkill = new Skill(UUID.randomUUID(), courseId, k);
+        Skill oSkill = new Skill(UUID.randomUUID(), courseId, o);
+        Skill tSkill = new Skill(UUID.randomUUID(), courseId, t);
+        Skill kotSkill = new Skill(UUID.randomUUID(), courseId, kot,
+                Set.of(kSkill.id(), oSkill.id(), tSkill.id()));
+        Course course = new Course(courseId, "READING_RU", Language.RU,
+                List.of(k, o, t, kot), List.of(kSkill, oSkill, tSkill, kotSkill));
+        return new RussianKot(course, kot, kSkill, oSkill, tSkill);
+    }
+
     private Course course(String code, Language language) {
         return new Course(UUID.randomUUID(), code, language, List.of());
     }
+
+    private record RussianKot(Course course, Word word, Skill kSkill, Skill oSkill, Skill tSkill) {}
 }
