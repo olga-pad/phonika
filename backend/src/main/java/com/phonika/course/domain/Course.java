@@ -3,6 +3,7 @@ package com.phonika.course.domain;
 import com.phonika.learning.domain.Language;
 import com.phonika.learning.domain.LearningContent;
 import com.phonika.learning.domain.Skill;
+import com.phonika.learning.domain.SkillKind;
 
 import java.util.HashSet;
 import java.util.List;
@@ -39,11 +40,15 @@ public final class Course {
         }
 
         Set<UUID> skillIds = new HashSet<>();
+        Set<SkillDefinition> skillDefinitions = new HashSet<>();
         for (Skill skill : this.skills) {
             if (!skillIds.add(skill.id())) throw new IllegalArgumentException("course skill ids must be unique");
             if (!skill.courseId().equals(this.id)) throw new IllegalArgumentException("skill must belong to this course");
             if (skill.target().language() != language) throw new IllegalArgumentException("skill target language must match course language");
             if (!contentIds.contains(skill.target().id())) throw new IllegalArgumentException("skill target must belong to course content");
+            if (!skillDefinitions.add(new SkillDefinition(skill.target().id(), skill.kind()))) {
+                throw new IllegalArgumentException("course cannot contain duplicate target and skill kind");
+            }
         }
         for (Skill skill : this.skills) {
             if (!skillIds.containsAll(skill.prerequisiteSkillIds())) {
@@ -63,8 +68,18 @@ public final class Course {
         return skills.stream().filter(skill -> skill.target().id().equals(target.id())).findFirst();
     }
 
+    public Optional<Skill> skillTargeting(LearningContent target, SkillKind kind) {
+        Objects.requireNonNull(target);
+        Objects.requireNonNull(kind);
+        return skills.stream()
+                .filter(skill -> skill.target().id().equals(target.id()) && skill.kind() == kind)
+                .findFirst();
+    }
+
     private static String requireCode(String value) {
         if (value == null || value.isBlank()) throw new IllegalArgumentException("code is required");
         return value;
     }
+
+    private record SkillDefinition(UUID targetId, SkillKind kind) {}
 }
