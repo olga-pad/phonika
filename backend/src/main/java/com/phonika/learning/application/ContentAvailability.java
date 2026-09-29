@@ -1,6 +1,7 @@
 package com.phonika.learning.application;
 
 import com.phonika.course.domain.Course;
+import com.phonika.learner.domain.Learner;
 import com.phonika.learning.domain.LearningContent;
 import com.phonika.learning.domain.Skill;
 
@@ -18,5 +19,10 @@ public final class ContentAvailability {
         Skill skill = course.skillTargeting(content)
                 .orElseThrow(() -> new IllegalArgumentException("content has no skill in this course"));
         return masteredSkillIds.containsAll(skill.prerequisiteSkillIds());
+    }
+
+    public boolean isAvailable(Course course, LearningContent content, Learner learner) {
+        Objects.requireNonNull(learner);
+        return isAvailable(course, content, learner.masteredSkillIds(course.id()));
     }
 }
