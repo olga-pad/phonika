@@ -39,7 +39,7 @@ class PhonikaDomainTest {
 
     @Test void phonemeGraphemeAndWordAreLanguageScoped() {
         Phoneme ruPhoneme = new Phoneme(UUID.randomUUID(), "м", Language.RU);
-        Grapheme ruGrapheme = new Grapheme(UUID.randomUUID(), "м", Language.RU, List.of(ruPhoneme));
+        Grapheme ruGrapheme = new Grapheme(UUID.randomUUID(), "м", Language.RU);
         Word ruWord = new Word(UUID.randomUUID(), "мама", Language.RU, List.of(ruGrapheme));
         assertEquals(Language.RU, ruPhoneme.language());
         assertEquals(Language.RU, ruGrapheme.language());
@@ -59,12 +59,6 @@ class PhonikaDomainTest {
         assertNotEquals(englishA.id(), frenchA.id());
         assertNotSame(englishA, frenchA);
         assertNotEquals(englishA.language(), frenchA.language());
-    }
-
-    @Test void rejectsCrossLanguageGraphemePhonemeRelation() {
-        Phoneme french = new Phoneme(UUID.randomUUID(), "u", Language.FR);
-        assertThrows(IllegalArgumentException.class,
-                () -> new Grapheme(UUID.randomUUID(), "u", Language.EN, List.of(french)));
     }
 
     @Test void wordCanDescribeMultiCharacterGraphemeSegmentation() {
@@ -89,7 +83,7 @@ class PhonikaDomainTest {
 
     @Test void courseAcceptsOnlyMatchingLinguisticContent() {
         Phoneme phoneme = new Phoneme(UUID.randomUUID(), "м", Language.RU);
-        Grapheme grapheme = new Grapheme(UUID.randomUUID(), "м", Language.RU, List.of(phoneme));
+        Grapheme grapheme = new Grapheme(UUID.randomUUID(), "м", Language.RU);
         Word word = new Word(UUID.randomUUID(), "мама", Language.RU, List.of(grapheme));
         Course course = new Course(UUID.randomUUID(), "READING_RU", Language.RU, List.of(phoneme, grapheme, word));
         assertEquals(3, course.content().size());

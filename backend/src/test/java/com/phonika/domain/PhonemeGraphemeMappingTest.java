@@ -6,7 +6,6 @@ import com.phonika.learning.domain.Phoneme;
 import com.phonika.learning.domain.PhonemeGraphemeMapping;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -135,7 +134,7 @@ class PhonemeGraphemeMappingTest {
     }
 
     private static Grapheme grapheme(Language language, String representation) {
-        return new Grapheme(UUID.randomUUID(), representation, language, List.of());
+        return new Grapheme(UUID.randomUUID(), representation, language);
     }
 
     private static Phoneme phoneme(Language language, String representation) {
