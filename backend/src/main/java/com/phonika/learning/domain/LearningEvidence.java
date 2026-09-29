@@ -15,6 +15,7 @@ public final class LearningEvidence {
     private final UUID enrollmentId;
     private final UUID courseId;
     private final UUID skillId;
+    private final UUID learningSessionId;
     private final Instant occurredAt;
     private final EvidenceResult result;
     private final boolean firstAttempt;
@@ -27,6 +28,7 @@ public final class LearningEvidence {
             Learner learner,
             Enrollment enrollment,
             Skill skill,
+            LearningSession learningSession,
             Instant occurredAt,
             EvidenceResult result,
             boolean firstAttempt,
@@ -37,6 +39,7 @@ public final class LearningEvidence {
         Objects.requireNonNull(learner);
         Objects.requireNonNull(enrollment);
         Objects.requireNonNull(skill);
+        Objects.requireNonNull(learningSession);
         this.occurredAt = Objects.requireNonNull(occurredAt);
         this.result = Objects.requireNonNull(result);
         this.assistance = Objects.requireNonNull(assistance);
@@ -51,6 +54,15 @@ public final class LearningEvidence {
                 || enrollment.course().skills().stream().noneMatch(candidate -> candidate.id().equals(skill.id()))) {
             throw new IllegalArgumentException("skill must belong to enrollment course");
         }
+        if (!learningSession.learnerId().equals(learner.id())) {
+            throw new IllegalArgumentException("learning session must belong to learner");
+        }
+        if (!learningSession.enrollmentId().equals(enrollment.id())) {
+            throw new IllegalArgumentException("learning session must belong to enrollment");
+        }
+        if (!learningSession.courseId().equals(enrollment.course().id())) {
+            throw new IllegalArgumentException("learning session must belong to course");
+        }
         if (activityReference != null && activityReference.isBlank()) {
             throw new IllegalArgumentException("activity reference must be non-blank when provided");
         }
@@ -59,6 +71,7 @@ public final class LearningEvidence {
         this.enrollmentId = enrollment.id();
         this.courseId = enrollment.course().id();
         this.skillId = skill.id();
+        this.learningSessionId = learningSession.id();
         this.firstAttempt = firstAttempt;
         this.activityReference = activityReference;
     }
@@ -68,6 +81,7 @@ public final class LearningEvidence {
     public UUID enrollmentId() { return enrollmentId; }
     public UUID courseId() { return courseId; }
     public UUID skillId() { return skillId; }
+    public UUID learningSessionId() { return learningSessionId; }
     public Instant occurredAt() { return occurredAt; }
     public EvidenceResult result() { return result; }
     public boolean correct() { return result == EvidenceResult.CORRECT; }
