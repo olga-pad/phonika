@@ -51,7 +51,10 @@ class LearningEvidenceTest {
         LearningEvidence one = evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME);
         LearningEvidence two = evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME);
         LearningEvidence three = evidence(context, context.fixture().recognition(), session, EvidenceResult.INCORRECT, true, Assistance.NONE, EvidenceSource.GAME);
-        assertEquals(Set.of(session.id()), Set.of(one.learningSessionId(), two.learningSessionId(), three.learningSessionId()));
+        Set<UUID> sessionIds = List.of(one, two, three).stream()
+                .map(LearningEvidence::learningSessionId)
+                .collect(Collectors.toSet());
+        assertEquals(Set.of(session.id()), sessionIds);
     }
 
     @Test void evidenceAcrossTwoSessionsHasTwoDistinctSessionIds() {
@@ -153,14 +156,18 @@ class LearningEvidenceTest {
     }
 
     @Test void rejectsSessionFromAnotherEnrollment() {
-        Fixture fixture = russianKot();
-        Learner learner = new Learner(UUID.randomUUID(), "Thomas");
-        Enrollment first = learner.enroll(UUID.randomUUID(), fixture.course());
-        Enrollment second = learner.enroll(UUID.randomUUID(), fixture.course());
-        Context firstContext = new Context(fixture, learner, first);
-        LearningSession firstSession = session(firstContext);
-        assertThrows(IllegalArgumentException.class, () -> new LearningEvidence(UUID.randomUUID(), learner, second,
-                fixture.recognition(), firstSession, NOW, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME, null));
+        Context ru = enrolled(russianKot());
+        UUID enCourseId = UUID.randomUUID();
+        Grapheme sh = new Grapheme(UUID.randomUUID(), "sh", Language.EN);
+        Skill shSkill = new Skill(UUID.randomUUID(), enCourseId, sh, SkillKind.RECOGNITION);
+        Course enCourse = new Course(enCourseId, "READING_EN", Language.EN, List.of(sh), List.of(shSkill));
+        Enrollment enEnrollment = ru.learner().enroll(UUID.randomUUID(), enCourse);
+        LearningSession enSession = new LearningSession(UUID.randomUUID(), ru.learner(), enEnrollment, NOW);
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> new LearningEvidence(UUID.randomUUID(), ru.learner(), ru.enrollment(), ru.fixture().recognition(),
+                        enSession, NOW, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME, null));
+        assertEquals("learning session must belong to enrollment", error.getMessage());
     }
 
     @Test void rejectsSessionFromAnotherCourse() {
