@@ -45,16 +45,67 @@ class LearningEvidenceTest {
         assertEquals(first.courseId(), second.courseId());
     }
 
+    @Test void repeatDoesNotCreateNewLearningSession() {
+        Context context = enrolled(russianKot());
+        LearningSession session = session(context);
+        List<LearningEvidence> repeatedAttempts = List.of(
+                evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME, "find-repeat-1"),
+                evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME, "find-repeat-2"),
+                evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME, "find-repeat-3"));
+
+        assertEquals(Set.of(session.id()), learningSessionIds(repeatedAttempts));
+    }
+
+    @Test void continueToNextTaskDoesNotCreateNewLearningSession() {
+        Context context = enrolled(russianKot());
+        LearningSession session = session(context);
+        List<LearningEvidence> consecutiveTasks = List.of(
+                evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME, "task-1"),
+                evidence(context, context.fixture().recognition(), session, EvidenceResult.INCORRECT, true, Assistance.NONE, EvidenceSource.GAME, "task-2"),
+                evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME, "task-3"));
+
+        assertEquals(Set.of(session.id()), learningSessionIds(consecutiveTasks));
+    }
+
+    @Test void activityChangeCanRemainInSameLearningSession() {
+        Context context = enrolled(russianKot());
+        LearningSession session = session(context);
+        LearningEvidence find = evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT,
+                true, Assistance.NONE, EvidenceSource.GAME, "find");
+        LearningEvidence buildWord = evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT,
+                true, Assistance.NONE, EvidenceSource.GAME, "build-word");
+        LearningEvidence reading = evidence(context, context.fixture().independentReading(), session, EvidenceResult.CORRECT,
+                true, Assistance.NONE, EvidenceSource.INDEPENDENT_READING, "independent-reading");
+
+        assertEquals(Set.of(session.id()), learningSessionIds(List.of(find, buildWord, reading)));
+        assertEquals("find", find.activityReference().orElseThrow());
+        assertEquals("build-word", buildWord.activityReference().orElseThrow());
+        assertEquals("independent-reading", reading.activityReference().orElseThrow());
+        assertNotEquals(find.source(), reading.source());
+    }
+
+    @Test void explicitNewLearningSessionChangesEvidenceSessionIdentity() {
+        Context context = enrolled(russianKot());
+        LearningSession a = session(context);
+        LearningSession b = session(context);
+        LearningEvidence inA = evidence(context, context.fixture().recognition(), a, EvidenceResult.CORRECT,
+                true, Assistance.NONE, EvidenceSource.GAME, "find");
+        LearningEvidence inB = evidence(context, context.fixture().recognition(), b, EvidenceResult.CORRECT,
+                true, Assistance.NONE, EvidenceSource.GAME, "find");
+
+        assertNotEquals(a.id(), b.id());
+        assertEquals(a.id(), inA.learningSessionId());
+        assertEquals(b.id(), inB.learningSessionId());
+        assertEquals(2, learningSessionIds(List.of(inA, inB)).size());
+    }
+
     @Test void multipleEvidenceCanBelongToOneSession() {
         Context context = enrolled(russianKot());
         LearningSession session = session(context);
         LearningEvidence one = evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME);
         LearningEvidence two = evidence(context, context.fixture().recognition(), session, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME);
         LearningEvidence three = evidence(context, context.fixture().recognition(), session, EvidenceResult.INCORRECT, true, Assistance.NONE, EvidenceSource.GAME);
-        Set<UUID> sessionIds = List.of(one, two, three).stream()
-                .map(LearningEvidence::learningSessionId)
-                .collect(Collectors.toSet());
-        assertEquals(Set.of(session.id()), sessionIds);
+        assertEquals(Set.of(session.id()), learningSessionIds(List.of(one, two, three)));
     }
 
     @Test void evidenceAcrossTwoSessionsHasTwoDistinctSessionIds() {
@@ -65,8 +116,7 @@ class LearningEvidenceTest {
                 evidence(context, context.fixture().recognition(), a, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME),
                 evidence(context, context.fixture().recognition(), a, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME),
                 evidence(context, context.fixture().recognition(), b, EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME));
-        Set<UUID> sessionIds = evidence.stream().map(LearningEvidence::learningSessionId).collect(Collectors.toSet());
-        assertEquals(2, sessionIds.size());
+        assertEquals(2, learningSessionIds(evidence).size());
     }
 
     @Test void oneSessionCanContainEvidenceForDifferentSkills() {
@@ -199,10 +249,19 @@ class LearningEvidenceTest {
         assertEquals("activity-1", evidence.activityReference().orElseThrow());
     }
 
+    private Set<UUID> learningSessionIds(List<LearningEvidence> evidence) {
+        return evidence.stream().map(LearningEvidence::learningSessionId).collect(Collectors.toSet());
+    }
+
     private LearningEvidence evidence(Context context, Skill skill, LearningSession session, EvidenceResult result,
                                       boolean firstAttempt, Assistance assistance, EvidenceSource source) {
+        return evidence(context, skill, session, result, firstAttempt, assistance, source, null);
+    }
+
+    private LearningEvidence evidence(Context context, Skill skill, LearningSession session, EvidenceResult result,
+                                      boolean firstAttempt, Assistance assistance, EvidenceSource source, String activityReference) {
         return new LearningEvidence(UUID.randomUUID(), context.learner(), context.enrollment(), skill, session, NOW,
-                result, firstAttempt, assistance, source, null);
+                result, firstAttempt, assistance, source, activityReference);
     }
 
     private LearningSession session(Context context) {
