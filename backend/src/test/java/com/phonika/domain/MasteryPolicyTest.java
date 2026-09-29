@@ -122,7 +122,8 @@ class MasteryPolicyTest {
 
     @Test void multiCharacterEnglishGraphemeIsOneMasteryTarget() {
         Context c = context(SkillKind.RECOGNITION, Language.EN, "sh");
-        assertEquals("sh", c.skill.target().representation());
+        Grapheme sh = assertInstanceOf(Grapheme.class, c.skill.target());
+        assertEquals("sh", sh.representation());
         assertTrue(policy.isMastered(c.learner, c.enrollment, c.skill, List.of(
                 evidence(c, session(c), EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME),
                 evidence(c, session(c), EvidenceResult.CORRECT, true, Assistance.NONE, EvidenceSource.GAME))));
